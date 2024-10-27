@@ -1,0 +1,52 @@
+command :
+
+get ASN : 
+curl -s https://api.bgpview.io/search?query_term=paypal | jq
+nmap --script targets-asn --script-args targets-asn.asn=26444
+for ipa in 98.13{6..9}.{0..255}.{0..255}; do
+	wget -t 1 -T 5 http://${ipa}/phpinfo.php;
+done
+
+IP revers lookup 
+curl -s 'https://rapiddns.io/sameip/172.217.3.174/24?page=2' | grep 'target=" ' -B1 | egrep -v '(--|) ' | rev | cut -c 6- | rev | cut -c 5- | sort -u
+https://github.com/codingo/Interlace
+interlace -tL ip.txt -c "curl -s '
+https://rapiddns.io/sameip/_target_?full=1#result' | grep
+'target=' -B1 | egrep -v '(--|) ' | rev | cut -c 6- | rev
+| cut -c 5- | sort -u >> output.txt" -threads 2 --silent
+--no-color --no-bar
+
+open port 
+sudo masscan --open-only 10.22.144.0/24 -p1-65535,U:1-65535 --rate=10000 --http-user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0" -oL "output.txt"
+
+cat output.txt | grep tcp | awk ' {print $4,":",$3}' | tr -d ' ' | httpx -title -sc -cl
+
+subdomans :
+https://wordlists-cdn.assetnote.io/data/manual/best-dns-wordlist.txt
+https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
+dns
+https://github.com/vortexau/dnsvalidator
+https://public-dns.info/nameservers.txt
+dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 100 -o resolvers.txt
+shuffledns -d paypal.com -w subdomains-top1million-5000.
+txt -r resolvers.txt
+python3 subbrute.py sub-wordlist.txt paypal.com | mass-
+dns -r resolvers.txt -o S -w output.txt
+gobuster dns -w sub-wordlist.txt -d paypal.com -t 50
+
+content-security-policy enume sub :
+curl -I -s https://api-s.sandbox.paypal.com | grep -iE 'content-security-policy|CSP' |tr " " "\n" | grep "\." | tr -d ";" | sed 's/\*\.//g' | sort -u
+cat favicon.ico | base64 | python3 -c "import mmh3,sys; print(mmh3.hash(sys.stdin.buffer.read()))
+Http.favicon.hash:code
+curl -s www.paypalobjects.com/webstatic/icon/favicon.
+ico | base64 | python3 -c 'import mmh3, sys;print(mmh3.
+hash(sys.stdin.buffer.read()))' | xargs -I{} shodan
+search http.favicon.hash:{} --fields hostnames | tr ";"
+"\n"
+
+
+
+
+=====================================
+Passive Enumeration of Subdomains
+
