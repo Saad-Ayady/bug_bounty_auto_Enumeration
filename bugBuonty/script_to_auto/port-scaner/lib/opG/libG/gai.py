@@ -3,24 +3,134 @@ from tkinter import font
 from PIL import Image, ImageTk
 
 root = Tk()
-root.geometry("500x300")
+root.geometry("500x300+100+100")  # Set root window width to 500 and height to 300
 root.title('0xdy')
+icon_path = "logo.ico"  # Update this if necessary
+try:
+    img = Image.open(icon_path)
+    img = img.resize((16, 16), Image.LANCZOS)  # Resize to a standard icon size
+    photo = ImageTk.PhotoImage(img)
+    root.iconphoto(False, photo)  # Set the window icon
+except Exception as e:
+    print(f"Error loading icon: {e}")
+
+root.minsize(500, 300)  # width, height
+root.maxsize(500, 300)  # width, height
+
+# Initialize global variables
+entry_value = ""
+checkbox_vars = {}
+child_checkboxes = {}
+
+# Variable for entry
+entry_var = StringVar()
 
 def clear_window():
     for widget in root.winfo_children():
         widget.destroy()
-    create_new_elements() 
+    create_new_elements()
+
+def clear_window2():
+    for widget in root.winfo_children():
+        widget.destroy()
+    create_last_wind(entry_value)
+
+def create_scrollable_frame(root):
+    frame = Frame(root, width=200, height=110)
+    frame.place(x=240, y=120)
+
+    canvas = Canvas(frame, width=200, height=110)
+    scroll_y = Scrollbar(frame, orient="vertical", command=canvas.yview)
+    scroll_y.pack(side="right", fill="y")
+
+    canvas.pack(side="left", fill="both", expand=True)
+    canvas.configure(yscrollcommand=scroll_y.set)
+
+    inner_frame = Frame(canvas)
+    canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+
+    create_checkboxes(inner_frame)
+    inner_frame.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
+
+def create_checkboxes(frame):
+    global checkbox_vars, child_checkboxes
+    checkbox_vars = {}
+    child_checkboxes = {}
+    categories = {
+        "Subdomains": ["Dorking", "ASP", "Brute Force"],
+        "Ports": ["Open Ports", "Version", "Programs", "Vulnerability"],
+        "Vulnerabilities": ["SQL Injection", "XSS", "LFI", "File Upload"]
+    }
+
+    row = 0
+
+    for main_option, sub_options in categories.items():
+        main_var = IntVar()
+        checkbox_vars[main_option] = main_var
+        cb = Checkbutton(frame, text=main_option, variable=main_var, command=lambda opt=main_option: toggle_sub_options(opt))
+        cb.grid(row=row, column=0, sticky="w")
+        row += 1
+
+        child_checkboxes[main_option] = []
+        for sub_option in sub_options:
+            sub_var = IntVar()
+            checkbox_vars[sub_option] = sub_var
+            cb_sub = Checkbutton(frame, text=sub_option, variable=sub_var, state="disabled")
+            cb_sub.grid(row=row, column=0, sticky="w", padx=5)  # Minimal 5px padding for subtle indentation
+            child_checkboxes[main_option].append(cb_sub)
+            row += 1
+
+def toggle_sub_options(main_option):
+    main_var = checkbox_vars[main_option]
+    for cb_sub in child_checkboxes[main_option]:
+        if main_var.get() == 1:
+            cb_sub.config(state="normal")
+        else:
+            cb_sub.config(state="disabled")
+            cb_sub.deselect()
+
+def next_action():
+    global entry_value
+    entry_value = entry.get()  # Save entry value
+    checkbox_states = {name: (var.get() == 1) for name, var in checkbox_vars.items()}
+    clear_window2()
+
+def create_inputs(win, text, x, y):
+    label = Label(win, text=text)
+    label.place(x=x, y=y)
 
 def create_new_elements():
-    message_label = Label(root, text="You have continued! Create new elements below:")
-    message_label.pack(pady=20)
-    titels("New Elements", "blue", "white", root)
-    new_checkbox_var = BooleanVar()
-    new_checkbox = Checkbutton(root, text="New Checkbox", variable=new_checkbox_var)
-    new_checkbox.pack(pady=10)
-    new_button = Button(root, text="Do Something", command=lambda: print("Doing something..."))
-    new_button.pack(pady=10)
+    display_image('g.png')
+    titels("Developed by 0xdy group...", "black", "white", root)
+    
+    global entry
+    entry = Entry(root, textvariable=entry_var, width=25)
+    entry.place(x=250, y=80)
+    
+    # Create the Next button and disable it initially
+    next_button = Button(root, text="Next", command=next_action, state=DISABLED)
+    next_button.place(x=420, y=260)
 
+    # Monitor entry changes to enable/disable the Next button
+    entry_var.trace("w", lambda *args: validate_entry(next_button))
+
+    exit_button = Button(root, text="Exit", command=root.quit)
+    exit_button.place(x=350, y=260)
+    
+    create_scrollable_frame(root)
+
+def validate_entry(button):
+    """Enable the Next button if the entry is not empty, otherwise disable it."""
+    if entry_var.get().strip():  # Check if entry is not empty
+        button.config(state=NORMAL)
+    else:
+        button.config(state=DISABLED)
+
+def create_last_wind(entry_value):
+    display_image('g.png')
+    titels("Developed by 0xdy group...", "black", "white", root)
+    Label(root, text=f"Target Name: {entry_value}", font=('Arial', 12)).pack(padx=20, pady=30)
 
 def titels(text, color, text_color, win):
     title_frame = Frame(win, bg=color, height=30)
@@ -73,7 +183,7 @@ def create_checkbox_buttons():
 
 display_image('g.png')
 titels("Developed by 0xdy group...", "black", "white", root)
-create_scrollable_window("Françoise d’Aubigné est la fille de Constant d'Aubigné — lui-même fils du célèbre poète protestant et ami d'Henri IV, Agrippa d'Aubigné — et de sa seconde épouse Jeanne de Cardilhac. Constant d'Aubigné, après avoir abjuré sa foi protestante en 1618, assassine sa première épouse et son amant en 1619, puis dépense rapidement la dot de la deuxième, et est soupçonné d'intelligence avec les Anglais avec qui il est en relation d'affaires. Il est ainsi enfermé dans plusieurs prisons, dont celle de Bordeaux, le Château Trompette, et celle de Niort2. Françoise naît le 27 novembre 1635 rue du Pont dans la prison royale de Niort (baptisée à Niort, paroisse Notre-Dame), dans la geôle où son père est incarcéré pour dettes (Jeanne de Cardilhac, trop jeune et désargentée, partageant la cellule avec son mari)N 1, ce lieu de naissance étant incertain3.Lorsque son père sort de la prison de Niort, la jeune Françoise passe les premiers mois de sa petite enfance chez madame de Villette, sa tante huguenote, au château de Mursay, au nord de Niort. Elle passe les six années suivantes avec ses parents dans la colonie de Martinique : son père ayant obtenu la charge de gouverneur des Îles de Marie-Galante, il s'installe dans « l’île aux fleurs » où il a décidé de faire fortune4. Elle y garde un souvenir très fort, transmis à ses futurs époux, le poète burlesque Paul Scarron puis le roi de France Louis XIV, qui décide dès 1674 d'intensifier la culture de la canne à sucre en Martinique puis à Saint-Domingue.Le nom de son père est cité dans un premier voyage un an plus tôt, celui de 1635 avec Pierre Belain d'Esnambuc, fondateur de Saint-Pierre en Martinique en 1635. Le couple part en 1636 pour la colonie de Saint-Christophe, d'où il gagne la Martinique5. Françoise vit avec ses parents dans le village du Prêcheur, le premier où est arrivé d'Esnambuc, tout près de Saint-PierreN 2 à l'extrémité nord-ouest de la Martinique, exposé aux attaques incessantes des autochtones de l'île de la Dominique.Officiellement, son père est gouverneur de la toute petite île de Marie-Galante, toute proche. Mais ce titre ne lui est pas reconnu et il n'a pas les moyens de le valoriser. L'île est alors vierge et doit en principe gouverner la Martinique, elle-même couverte aux neuf dixièmes de forêts, où autochtones et boucaniers font la loi. La famille de Françoise survit en fait dans la pauvreté, alors que la colonie anglais de Barbade, non loin, accède bientôt à la richesse. Ce séjour de six ans lui vaudra le surnom de « belle Indienne ». Il s'achève à l'époque où les colons de la Martinique tentent sans succès d'introduire la culture de la canne à sucre, qui s'avère très rentable à la Barbade dès les années 1640, et entraîne l'éviction des planteurs de tabac. À son retour en France, en juillet 1647, Françoise apprend la mort de son père qui avait abandonné sa famille en 1645 pour chercher en métropole à faire reconnaître son titre de gouverneur. Jeanne de Cardilhac et ses trois enfants vivent misérablement dans une pièce unique, dans une maison proche du port de La Rochelle. La future Madame de Maintenon « n'oubliera jamais l'humiliation de la mendicité qu'elle a vécue à l'époque de ses douze ans, dans la faim, le froid, le désespoir de sa mère » qui « se perd dans le monde des hommes de loi parisiens, sans parvenir à recouvrer une partie de l'héritage » de son mari6. Elle est à nouveau prise en charge par sa tante de Niort, Mme de Villette, fervente protestante. Sa marraine, Madame de Neuillant, fervente catholique, obtient de la reine-mère Anne d'Autriche une lettre de cachet pour récupérer Françoise et lui permettre de pratiquer le catholicisme (en effet à sa naissance Madame d'Aubigné l'avait fait baptiser dans la religion catholique) et renier sa foi calviniste. Elle la place contre sa volonté au couvent des Ursulines de Niort, puis chez les Ursulines de la rue Saint-Jacques à Paris7 où, grâce à la douceur et l'affection d'une religieuse, sœur Céleste, la jeune fille renonce définitivement au calvinisme, condition indispensable pour pouvoir accompagner Mme de Neuillant dans les salons parisiens. C'est à l'une de ces réunions mondaines qu'elle rencontre le chevalier de Méré qui se prend d'affection pour celle qu'il nomme « la belle Indienne » et s'offre de l'instruire convenablement. ")
+create_scrollable_window("Françoise d’Aubigné...")
 create_checkbox_buttons()
 
 root.mainloop()
